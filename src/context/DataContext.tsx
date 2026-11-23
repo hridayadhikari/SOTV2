@@ -206,27 +206,27 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         if (heroRes.data && heroRes.data.length > 0) {
-          setHeroPhotos(heroRes.data.map(h => ({
+          setHeroPhotos(heroRes.data.map((h: any) => ({
             id: h.id,
-            url: h.url,
-            title: h.title,
-            location: h.location,
-            photographer: h.photographer,
-            year: h.year,
+            url: h.url || h.image_url || h.photo_url || '',
+            title: h.title || 'Untitled',
+            location: h.location || 'Agartala, Tripura',
+            photographer: h.photographer || h.photographer_name || 'Streets of Tripura',
+            year: String(h.year || '2025'),
             alignment: h.alignment || 'bottom-left'
           })));
         } else {
-          // If query succeeds without error but table is empty or column created_at is missing, try fallback select without order
+          // If order query returned nothing or failed on created_at, fallback to select('*')
           const fallbackHero = await supabase.from('hero_photos').select('*');
           console.log('[Supabase Data Load] fallbackHero:', fallbackHero);
           if (fallbackHero.data && fallbackHero.data.length > 0) {
-            setHeroPhotos(fallbackHero.data.map(h => ({
+            setHeroPhotos(fallbackHero.data.map((h: any) => ({
               id: h.id,
-              url: h.url,
-              title: h.title,
-              location: h.location,
-              photographer: h.photographer,
-              year: h.year,
+              url: h.url || h.image_url || h.photo_url || '',
+              title: h.title || 'Untitled',
+              location: h.location || 'Agartala, Tripura',
+              photographer: h.photographer || h.photographer_name || 'Streets of Tripura',
+              year: String(h.year || '2025'),
               alignment: h.alignment || 'bottom-left'
             })));
           }
