@@ -185,7 +185,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           storiesRes,
           walksRes,
           exhibitionsRes,
-          magazinesRes
+          magazinesRes,
+          heroRes
         ] = await Promise.all([
           supabase.from('photos').select('*').order('created_at', { ascending: false }),
           supabase.from('team_members').select('*').order('created_at', { ascending: true }),
@@ -193,10 +194,23 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           supabase.from('stories').select('*').order('created_at', { ascending: false }),
           supabase.from('photowalks').select('*').order('created_at', { ascending: false }),
           supabase.from('exhibitions').select('*').order('created_at', { ascending: false }),
-          supabase.from('magazines').select('*').order('created_at', { ascending: false })
+          supabase.from('magazines').select('*').order('created_at', { ascending: false }),
+          supabase.from('hero_photos').select('*').order('created_at', { ascending: true })
         ]);
 
         if (!isMounted) return;
+
+        if (heroRes.data && heroRes.data.length > 0) {
+          setHeroPhotos(heroRes.data.map(h => ({
+            id: h.id,
+            url: h.url,
+            title: h.title,
+            location: h.location,
+            photographer: h.photographer,
+            year: h.year,
+            alignment: h.alignment || 'bottom-left'
+          })));
+        }
 
         if (photosRes.data && photosRes.data.length > 0) {
           setPhotos(photosRes.data.map(p => ({
@@ -391,15 +405,59 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const addHeroPhoto = async (newHero: HeroPhoto) => {
-    setHeroPhotos(prev => [...prev, newHero]);
+    const id = newHero.id || 'hero_' + Date.now();
+    const heroWithId = { ...newHero, id };
+    setHeroPhotos(prev => [...prev, heroWithId]);
+
+    if (isLiveSupabase && supabase) {
+      try {
+        await supabase.from('hero_photos').insert({
+          id,
+          url: heroWithId.url,
+          title: heroWithId.title,
+          location: heroWithId.location,
+          photographer: heroWithId.photographer,
+          year: heroWithId.year,
+          alignment: heroWithId.alignment || 'bottom-left'
+        });
+      } catch (err) {
+        console.error('Failed to insert hero photo in Supabase:', err);
+      }
+    }
   };
 
   const updateHeroPhoto = async (index: number, updatedHero: HeroPhoto) => {
-    setHeroPhotos(prev => prev.map((h, i) => i === index ? updatedHero : h));
+    const target = heroPhotos[index];
+    const heroId = target?.id || updatedHero.id;
+    setHeroPhotos(prev => prev.map((h, i) => i === index ? { ...updatedHero, id: heroId } : h));
+
+    if (isLiveSupabase && supabase && heroId) {
+      try {
+        await supabase.from('hero_photos').update({
+          url: updatedHero.url,
+          title: updatedHero.title,
+          location: updatedHero.location,
+          photographer: updatedHero.photographer,
+          year: updatedHero.year,
+          alignment: updatedHero.alignment || 'bottom-left'
+        }).eq('id', heroId);
+      } catch (err) {
+        console.error('Failed to update hero photo in Supabase:', err);
+      }
+    }
   };
 
   const deleteHeroPhoto = async (index: number) => {
+    const target = heroPhotos[index];
     setHeroPhotos(prev => prev.filter((_, i) => i !== index));
+
+    if (isLiveSupabase && supabase && target?.id) {
+      try {
+        await supabase.from('hero_photos').delete().eq('id', target.id);
+      } catch (err) {
+        console.error('Failed to delete hero photo in Supabase:', err);
+      }
+    }
   };
 
   const addPhoto = async (newPhoto: Omit<Photo, 'id'>) => {
