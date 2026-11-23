@@ -1,0 +1,6 @@
+{
+  "name": "Streets of Tripura",
+  "description": "Youth-led creative platform, independent photography journal, and documentary digital archive of Tripura, India.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
