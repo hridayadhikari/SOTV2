@@ -200,6 +200,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (!isMounted) return;
 
+        console.log('[Supabase Data Load] heroRes:', heroRes);
+        if (heroRes.error) {
+          console.error('[Supabase Error] hero_photos:', heroRes.error);
+        }
+
         if (heroRes.data && heroRes.data.length > 0) {
           setHeroPhotos(heroRes.data.map(h => ({
             id: h.id,
@@ -210,6 +215,21 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             year: h.year,
             alignment: h.alignment || 'bottom-left'
           })));
+        } else {
+          // If query succeeds without error but table is empty or column created_at is missing, try fallback select without order
+          const fallbackHero = await supabase.from('hero_photos').select('*');
+          console.log('[Supabase Data Load] fallbackHero:', fallbackHero);
+          if (fallbackHero.data && fallbackHero.data.length > 0) {
+            setHeroPhotos(fallbackHero.data.map(h => ({
+              id: h.id,
+              url: h.url,
+              title: h.title,
+              location: h.location,
+              photographer: h.photographer,
+              year: h.year,
+              alignment: h.alignment || 'bottom-left'
+            })));
+          }
         }
 
         if (photosRes.data && photosRes.data.length > 0) {
